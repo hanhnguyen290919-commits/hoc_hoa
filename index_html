@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nông Trại Lipid - Hóa Học 12</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Fredoka -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* Custom Styling for Farm Theme */
+    body {
+      font-family: 'Fredoka', 'Inter', sans-serif;
+      background: linear-gradient(180deg, #70d6ff 0%, #a0c4ff 35%, #b9fbc0 35%, #70e000 100%);
+      min-height: 100vh;
+      user-select: none;
+      overflow-x: hidden;
+    }
+
+    /* Mây trôi animation */
+    @keyframes moveClouds {
+      0% { transform: translateX(-150px); }
+      100% { transform: translateX(calc(100vw + 150px)); }
+    }
+    .cloud {
+      position: absolute;
+      animation: moveClouds linear infinite;
+      opacity: 0.85;
+      pointer-events: none;
+    }
+
+    /* Hiệu ứng nảy cho rau củ */
+    @keyframes cropBounce {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-8px) scale(1.05); }
+    }
+    .crop-idle {
+      animation: cropBounce 3s ease-in-out infinite;
+    }
+    .crop-idle:hover {
+      transform: scale(1.15) rotate(3deg);
+      filter: drop-shadow(0 8px 12px rgba(0,0,0,0.25));
+    }
+
+    /* Đất nông trại Texture */
+    .soil-plot {
+      background: #6d4c41;
+      background-image: radial-gradient(#8d6e63 15%, transparent 16%), radial-gradient(#5d4037 15%, transparent 16%);
+      background-size: 16px 16px;
+      background-position: 0 0, 8px 8px;
+      box-shadow: inset 0 4px 6px rgba(0,0,0,0.4), 0 6px 0 #3e2723;
+    }
+
+    .soil-plot-harvested {
+      background: #4e342e;
+      box-shadow: inset 0 6px 8px rgba(0,0,0,0.6);
+      opacity: 0.9;
+    }
+
+    /* Bảng gỗ Wooden Panel */
+    .wood-panel {
+      background: #d7ccc8;
+      background-image: linear-gradient(0deg, #d7ccc8 0%, #efebe9 100%);
+      border: 6px solid #5d4037;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.35), inset 0 2px 4px rgba(255,255,255,0.8);
+    }
+
+    /* Nút chọn đáp án */
+    .option-btn {
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 0 #b0bec5;
+    }
+    .option-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 0 #90a4ae;
+    }
+    .option-btn:active:not(:disabled) {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #90a4ae;
+    }
+
+    /* Confetti Canvas */
+    #confettiCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Floating Score Text */
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-60px) scale(1.3); }
+    }
+    .floating-score {
+      position: absolute;
+      animation: floatUp 1.2s ease-out forwards;
+      font-weight: bold;
+      color: #ffd700;
+      text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
+      pointer-events: none;
+      z-index: 50;
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen relative overflow-x-hidden">
+
+  <!-- Background Clouds -->
+  <div class="cloud top-4 w-28 md:w-40" style="animation-duration: 28s; animation-delay: 0s;">
+    <svg viewBox="0 0 24 24" fill="white"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+  </div>
+  <div class="cloud top-16 w-36 md:w-52" style="animation-duration: 38s; animation-delay: -12s;">
+    <svg viewBox="0 0 24 24" fill="white"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+  </div>
+  <div class="cloud top-10 w-24 md:w-32" style="animation-duration: 22s; animation-delay: -5s;">
+    <svg viewBox="0 0 24 24" fill="white"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+  </div>
+
+  <!-- Sun in top right -->
+  <div class="absolute top-3 right-4 md:right-10 text-yellow-300 animate-spin" style="animation-duration: 25s;">
+    <svg class="w-16 h-16 md:w-20 md:h-20" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>
+    </svg>
+  </div>
+
+  <!-- Header / Top Dashboard -->
+  <header class="w-full max-w-6xl mx-auto px-4 pt-4 pb-2 z-10">
+    <div class="wood-panel rounded-2xl p-3 md:p-4 flex flex-col md:flex-row items-center justify-between gap-3 text-amber-950">
+      
+      <!-- Game Title -->
+      <div class="flex items-center gap-3">
+        <div class="bg-amber-600 text-white p-2.5 rounded-xl border-2 border-amber-900 shadow">
+          <span class="text-2xl md:text-3xl">🌾</span>
+        </div>
+        <div>
+          <h1 class="text-xl md:text-2xl font-bold tracking-wide text-amber-900 drop-shadow">NÔNG TRẠI LIPID</h1>
+          <p class="text-xs md:text-sm font-medium text-amber-800">Sách Giáo Khoa Hóa Học 12</p>
+        </div>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="flex items-center gap-4 bg-amber-50/80 px-4 py-2 rounded-xl border-2 border-amber-300 w-full md:w-auto justify-around">
+        <!-- Score -->
+        <div class="text-center">
+          <div class="text-xs text-amber-700 font-semibold uppercase">Điểm Số</div>
+          <div id="scoreDisplay" class="text-xl md:text-2xl font-black text-amber-900">0</div>
+        </div>
+
+        <div class="h-8 w-0.5 bg-amber-300"></div>
+
+        <!-- Harvested Count -->
+        <div class="text-center">
+          <div class="text-xs text-amber-700 font-semibold uppercase">Thu Hoạch</div>
+          <div class="text-lg md:text-xl font-bold text-emerald-700">
+            <span id="harvestedCount">0</span>/15 🧺
+          </div>
+        </div>
+
+        <div class="h-8 w-0.5 bg-amber-300"></div>
+
+        <!-- Progress % -->
+        <div class="text-center min-w-[70px]">
+          <div class="text-xs text-amber-700 font-semibold uppercase">Tiến Độ</div>
+          <div id="progressPercent" class="text-lg md:text-xl font-bold text-amber-800">0%</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="flex items-center gap-2">
+        <!-- Sound Toggle -->
+        <button id="soundToggleBtn" onclick="toggleAudio()" class="bg-amber-200 hover:bg-amber-300 text-amber-900 p-2.5 rounded-xl border-2 border-amber-500 font-bold text-sm flex items-center gap-1 transition">
+          <span id="soundIcon">🔊</span>
+        </button>
+        <!-- Info Button -->
+        <button onclick="openInfoModal()" class="bg-blue-100 hover:bg-blue-200 text-blue-900 p-2.5 rounded-xl border-2 border-blue-400 font-bold text-sm transition" title="Hướng dẫn">
+          ❓
+        </button>
+        <!-- Restart Button -->
+        <button onclick="confirmRestart()" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-2.5 rounded-xl border-2 border-rose-800 font-bold text-sm shadow transition flex items-center gap-1">
+          🔄 <span>Chơi Mới</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="w-full bg-amber-950/30 rounded-full h-3 mt-2 overflow-hidden border border-amber-800/40 p-0.5 shadow-inner">
+      <div id="progressBar" class="bg-gradient-to-r from-emerald-400 to-green-500 h-full rounded-full transition-all duration-500 w-0"></div>
+    </div>
+  </header>
+
+  <!-- Main Farm Field -->
+  <main class="flex-grow max-w-6xl w-full mx-auto px-3 py-4 z-10">
+    
+    <!-- Wooden Fence graphic overlay -->
+    <div class="w-full h-6 flex justify-between items-end mb-1 opacity-80 px-2">
+      <div class="flex gap-2">
+        <div class="w-3 h-8 bg-amber-800 border border-amber-950 rounded-t-sm"></div>
+        <div class="w-3 h-8 bg-amber-800 border border-amber-950 rounded-t-sm"></div>
+        <div class="w-3 h-8 bg-amber-800 border border-amber-950 rounded-t-sm"></div>
+      </div>
+      <div class="text-2xl">🏡 Nhà Kho Nông Trại</div>
+      <div class="flex gap-2">
+        <div class="w-3 h-8 bg-amber-800 border border-amber-950 rounded-t-sm"></div>
+        <div class="w-3 h-8 bg-amber-800 border border-amber-950 rounded-t-sm"></div>
+        <div class="w-3 h-8 bg-amber-800 border border-amber-950 rounded-t-sm"></div>
+      </div>
+    </div>
+
+    <!-- Soil Plot Grid (15 crops) -->
+    <div id="farmGrid" class="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4 p-4 bg-emerald-800/40 backdrop-blur-sm rounded-3xl border-4 border-emerald-900/60 shadow-2xl">
+      <!-- Generated dynamically by JS -->
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center py-3 text-emerald-950 font-semibold text-xs md:text-sm z-10 bg-emerald-600/30">
+    🌱 Trò chơi tương tác học tập Hóa Học 12 - Ôn tập Lipid, Chất béo & Acid béo
+  </footer>
+
+  <!-- Question Modal Overlay -->
+  <div id="questionModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 z-50 hidden opacity-0 transition-opacity duration-300">
+    <div class="wood-panel w-full max-w-2xl rounded-3xl p-5 md:p-6 relative max-h-[92vh] overflow-y-auto transform scale-95 transition-transform duration-300" id="modalContainer">
+      
+      <!-- Close / Back Button -->
+      <button onclick="closeQuestionModal()" class="absolute top-4 right-4 bg-amber-200 hover:bg-amber-300 text-amber-950 rounded-full w-9 h-9 flex items-center justify-center font-bold text-lg border-2 border-amber-800 shadow">
+        ✕
+      </button>
+
+      <!-- Modal Header -->
+      <div class="flex items-center gap-3 mb-4 pb-3 border-b-2 border-amber-400">
+        <div id="modalCropIcon" class="text-4xl p-2 bg-amber-200 rounded-2xl border-2 border-amber-600">
+          🥕
+        </div>
+        <div>
+          <span id="modalCropName" class="text-xs font-bold uppercase tracking-wider text-amber-800 bg-amber-200 px-2.5 py-1 rounded-full border border-amber-400">
+            Cà rốt #1
+          </span>
+          <h2 id="modalTitle" class="text-lg md:text-xl font-bold text-amber-950 mt-1">Câu hỏi Lipid</h2>
+        </div>
+      </div>
+
+      <!-- Question Text -->
+      <div class="bg-amber-50 p-4 rounded-2xl border-2 border-amber-300 mb-4 shadow-inner">
+        <p id="modalQuestionText" class="text-base md:text-lg text-amber-950 font-semibold leading-relaxed">
+          Nội dung câu hỏi...
+        </p>
+      </div>
+
+      <!-- 4 Option Buttons -->
+      <div id="optionsContainer" class="grid grid-cols-1 gap-2.5 mb-4">
+        <!-- Buttons added by JS -->
+      </div>
+
+      <!-- Feedback / SGK Explanation Box -->
+      <div id="feedbackBox" class="hidden p-4 rounded-2xl border-2 mb-4 transition-all">
+        <div id="feedbackTitle" class="font-bold text-base md:text-lg mb-1 flex items-center gap-2">
+          <!-- Dynamically set -->
+        </div>
+        <div id="feedbackExplanation" class="text-sm md:text-base leading-relaxed text-slate-800">
+          <!-- Explanation text -->
+        </div>
+      </div>
+
+      <!-- Modal Actions -->
+      <div class="flex justify-end gap-3 pt-2">
+        <button id="retryBtn" onclick="retryQuestion()" class="hidden bg-amber-500 hover:bg-amber-600 text-white font-bold px-5 py-2.5 rounded-xl border-2 border-amber-800 shadow transition">
+          🔄 Thử lại
+        </button>
+        <button id="nextBtn" onclick="closeQuestionModal()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl border-2 border-emerald-900 shadow transition flex items-center gap-2">
+          <span>Thu hoạch & Tiếp tục</span> 🌾
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Victory Screen Modal -->
+  <div id="victoryModal" class="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+    <div class="wood-panel w-full max-w-lg rounded-3xl p-6 text-center relative animate-bounce-short">
+      
+      <div class="text-6xl md:text-7xl mb-2 animate-pulse">🏆</div>
+      <h2 class="text-2xl md:text-3xl font-black text-amber-900 mb-1">XUẤT SẮC THU HOẠCH!</h2>
+      <p class="text-emerald-800 font-bold text-lg mb-4">Danh hiệu: NÔNG DÂN GIỎI HÓA HỌC 🎓🌾</p>
+
+      <div class="bg-amber-50 rounded-2xl p-4 border-2 border-amber-300 mb-6 text-left space-y-2">
+        <div class="flex justify-between items-center text-amber-900 font-bold">
+          <span>⭐ Tổng điểm đạt được:</span>
+          <span id="finalScore" class="text-2xl text-amber-600">1500</span>
+        </div>
+        <div class="flex justify-between items-center text-amber-900 font-bold">
+          <span>🧺 Cây đã thu hoạch:</span>
+          <span class="text-xl text-emerald-600">15 / 15</span>
+        </div>
+        <div class="flex justify-between items-center text-amber-900 font-bold">
+          <span>🎯 Độ chính xác:</span>
+          <span id="accuracyText" class="text-xl text-blue-600">100%</span>
+        </div>
+        <p id="encouragingMsg" class="text-xs md:text-sm text-slate-700 pt-2 border-t border-amber-200 italic">
+          Bạn đã nắm vững toàn bộ kiến thức SGK Lipid, Chất Béo & Acid Béo Hóa Học 12!
+        </p>
+      </div>
+
+      <button onclick="resetGame()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-lg font-extrabold py-3.5 rounded-2xl border-4 border-emerald-900 shadow-xl transition transform active:scale-95">
+        🌱 VÀO MÙA VỤ MỚI (CHƠI LẠI)
+      </button>
+    </div>
+  </div>
+
+  <!-- Info Modal -->
+  <div id="infoModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 hidden">
+    <div class="wood-panel w-full max-w-md rounded-3xl p-6 relative">
+      <button onclick="closeInfoModal()" class="absolute top-4 right-4 bg-amber-200 hover:bg-amber-300 text-amber-950 rounded-full w-8 h-8 font-bold">✕</button>
+      <h3 class="text-xl font-bold text-amber-950 mb-3 flex items-center gap-2">
+        <span>📖</span> Hướng Dẫn Trò Chơi
+      </h3>
+      <div class="text-sm text-slate-800 space-y-2.5 leading-relaxed bg-amber-50 p-4 rounded-xl border border-amber-300">
+        <p>1. **Bấm vào từng cây rau củ** trên luống đất để mở câu hỏi ôn tập Lipid SGK Hóa 12.</p>
+        <p>2. **Trả lời đúng**: Bạn sẽ thu hoạch nông sản, nhận +100 điểm và tích lũy số lượng cây.</p>
+        <p>3. **Trả lời chưa đúng**: Trò chơi hiển thị lời giải thích chi tiết từ SGK Hóa 12 để bạn học lại và chọn lại.</p>
+        <p>4. **Thu hoạch đủ 15 cây** để mở khóa danh hiệu **Nông Dân Giỏi Hóa Học**!</p>
+      </div>
+      <button onclick="closeInfoModal()" class="mt-4 w-full bg-amber-700 text-white py-2.5 rounded-xl font-bold">Đã Rõ!</button>
+    </div>
+  </div>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <script>
+    // 15 Questions based on SGK Chemistry 12 (Lipid - Fat - Fatty Acids)
+    const questionsData = [
+      {
+        id: 1,
+        cropName: "Cà rốt",
+        cropIcon: "🥕",
+        question: "Lipid là gì theo định nghĩa trong Sách giáo khoa Hóa học 12?",
+        options: [
+          "Hợp chất vô cơ dễ tan trong nước tạo dung dịch keo.",
+          "Hợp chất hữu cơ có trong tế bào sống, không tan trong nước nhưng tan trong dung môi hữu cơ không phân cực.",
+          "Hợp chất hữu cơ chỉ gồm các loại ester đơn chức mạch carbon ngắn.",
+          "Polymer thiên nhiên chứa các nguyên tố carbon, hydrogen, oxygen và nitrogen."
+        ],
+        correct: 1,
+        explanation: "SGK định nghĩa: Lipid là các hợp chất hữu cơ có trong tế bào sống, không tan trong nước nhưng tan trong các dung môi hữu cơ không phân cực (như ether, chloroform, benzene...)."
+      },
+      {
+        id: 2,
+        cropName: "Cà chua",
+        cropIcon: "🍅",
+        question: "Chất béo (triglyceride) thuộc loại hợp chất nào sau đây?",
+        options: [
+          "Monoester của glycerol với acid béo.",
+          "Triester của glycerol với acid béo.",
+          "Diester của ethylene glycol với acid béo.",
+          "Hợp chất vô cơ phức tạp của lipid."
+        ],
+        correct: 1,
+        explanation: "Chất béo là triester (ester ba chức) của glycerol với acid béo, gọi chung là triglyceride hay triacylglycerol."
+      },
+      {
+        id: 3,
+        cropName: "Ngô (Bắp)",
+        cropIcon: "🌽",
+        question: "Công thức phân tử / cấu tạo thu gọn của Palmitic acid là gì?",
+        options: [
+          "C17H35COOH (hoặc CH3[CH2]16COOH)",
+          "C15H31COOH (hoặc CH3[CH2]14COOH)",
+          "C17H33COOH (hoặc CH3[CH2]7CH=CH[CH2]7COOH)",
+          "C17H31COOH"
+        ],
+        correct: 1,
+        explanation: "Palmitic acid có công thức cấu tạo thu gọn là CH3[CH2]14COOH (viết gọn là C15H31COOH), đây là một acid béo no."
+      },
+      {
+        id: 4,
+        cropName: "Bắp cải",
+        cropIcon: "🥬",
+        question: "Oleic acid là một acid béo không no chứa 1 liên kết đôi C=C, có công thức cấu tạo thu gọn là:",
+        options: [
+          "CH3[CH2]14COOH",
+          "CH3[CH2]7CH=CH[CH2]7COOH",
+          "CH3[CH2]4CH=CHCH2CH=CH[CH2]7COOH",
+          "CH3[CH2]16COOH"
+        ],
+        correct: 1,
+        explanation: "Oleic acid có công thức thu gọn là CH3[CH2]7CH=CH[CH2]7COOH (gọn lại là C17H33COOH), chứa 1 liên kết đôi C=C dạng cis."
+      },
+      {
+        id: 5,
+        cropName: "Khoai tây",
+        cropIcon: "🥔",
+        question: "Acid béo nào sau đây chứa 2 liên kết đôi C=C trong phân tử?",
+        options: [
+          "Palmitic acid",
+          "Stearic acid",
+          "Oleic acid",
+          "Linoleic acid"
+        ],
+        correct: 3,
+        explanation: "Linoleic acid (C17H31COOH) chứa 2 liên kết đôi C=C trong mạch carbon. Palmitic & Stearic acid là acid béo no, Oleic acid chứa 1 liên kết đôi C=C."
+      },
+      {
+        id: 6,
+        cropName: "Củ cải trắng",
+        cropIcon: "🧅",
+        question: "Ở nhiệt độ thường, chất béo chứa nhiều gốc acid béo no (như mỡ lợn, mỡ bò) tồn tại ở trạng thái nào?",
+        options: [
+          "Trạng thái khí",
+          "Trạng thái lỏng",
+          "Trạng thái rắn",
+          "Dạng dung dịch tan hoàn toàn"
+        ],
+        correct: 2,
+        explanation: "Khi trong phân tử chất béo chứa nhiều gốc acid béo no (như mỡ lợn, mỡ bò, mỡ cừu) thì chất béo thường ở trạng thái rắn ở nhiệt độ phòng."
+      },
+      {
+        id: 7,
+        cropName: "Dâu tây",
+        cropIcon: "🍓",
+        question: "Phát biểu nào sau đây ĐÚNG về tính chất vật lí của chất béo?",
+        options: [
+          "Nặng hơn nước và tan tốt trong nước ở nhiệt độ thường.",
+          "Nhẹ hơn nước, không tan trong nước, dễ tan trong dung môi hữu cơ ít phân cực hoặc không phân cực.",
+          "Nhẹ hơn nước và tan hoàn toàn khi đun nóng với nước tinh khiết.",
+          "Nặng hơn nước và không tan trong bất kì dung môi hữu cơ nào."
+        ],
+        correct: 1,
+        explanation: "Chất béo nhẹ hơn nước, không tan trong nước nhưng tan tốt trong các dung môi hữu cơ ít phân cực hoặc không phân cực (ether, chloroform, xăng...)."
+      },
+      {
+        id: 8,
+        cropName: "Bí đỏ",
+        cropIcon: "🎃",
+        question: "Phản ứng hydrogen hoá dầu thực vật (chất béo lỏng) dùng để sản xuất sản phẩm nào trong thực phẩm?",
+        options: [
+          "Xà phòng rửa tay",
+          "Glycerol tinh khiết",
+          "Bơ thực vật (margarine)",
+          "Acid béo tự do"
+        ],
+        correct: 2,
+        explanation: "Hydrogen hoá chất béo lỏng (dầu thực vật) chuyển các gốc acid béo không no thành gốc acid béo no (dạng rắn), dùng để sản xuất bơ thực vật (margarine)."
+      },
+      {
+        id: 9,
+        cropName: "Cà tím",
+        cropIcon: "🍆",
+        question: "Hiện tượng dầu mỡ để lâu trong không khí bị ôi là do nguyên nhân chính nào?",
+        options: [
+          "Các gốc acid béo không no bị oxy hoá chậm bởi oxygen không khí tạo thành các hợp chất có mùi khó chịu.",
+          "Dầu mỡ tác dụng với nước mưa tạo thành glycerol tự do có mùi hôi.",
+          "Acid béo no bị phân hủy thành khí methane bốc mùi.",
+          "Vi khuẩn ăn mất gốc glycerol trong cấu trúc chất béo."
+        ],
+        correct: 0,
+        explanation: "Khi để lâu trong không khí, liên kết đôi C=C ở gốc acid béo không no bị oxy hoá chậm bởi oxygen không khí tạo thành peroxide, sau đó phân hủy thành aldehyde, ketone có mùi hôi ôi."
+      },
+      {
+        id: 10,
+        cropName: "Ớt chuông",
+        cropIcon: "🫑",
+        question: "Để hạn chế quá trình oxy hoá làm ôi dầu mỡ chế biến, người ta thường thêm vào thành phần nào?",
+        options: [
+          "Các muối ăn NaCl và NaHCO3",
+          "Các chất chống oxy hoá như Vitamin C, Vitamin E",
+          "Các chất tẩy rửa tổng hợp",
+          "Acid stearic tinh khiết"
+        ],
+        correct: 1,
+        explanation: "Để bảo quản thực phẩm chế biến chứa chất béo, người ta thường thêm các chất chống oxy hoá như Vitamin C, Vitamin E..."
+      },
+      {
+        id: 11,
+        cropName: "Dưa hấu",
+        cropIcon: "🍉",
+        question: "Vitamin nào sau đây KHÔNG tan trong chất béo (tan trong nước)?",
+        options: [
+          "Vitamin A",
+          "Vitamin D",
+          "Vitamin C",
+          "Vitamin K"
+        ],
+        correct: 2,
+        explanation: "Chất béo là môi trường hòa tan các vitamin A, D, E, K. Trong khi đó Vitamin C là vitamin tan trong nước."
+      },
+      {
+        id: 12,
+        cropName: "Nấm",
+        cropIcon: "🍄",
+        question: "Cách phân loại acid béo 'omega-3' và 'omega-6' dựa vào vị trí liên kết đôi C=C đầu tiên tính từ đâu?",
+        options: [
+          "Nhóm carboxyl (-COOH)",
+          "Nguyên tử carbon trung tâm chuỗi",
+          "Nhóm methyl (-CH3) ở cuối chuỗi carbon",
+          "Nhóm hydroxyl (-OH)"
+        ],
+        correct: 2,
+        explanation: "Các acid béo omega-3 và omega-6 có vị trí liên kết đôi C=C đầu tiên ở vị trí C số 3 hoặc C số 6 khi đánh số bắt đầu từ nhóm methyl (-CH3)."
+      },
+      {
+        id: 13,
+        cropName: "Củ dền",
+        cropIcon: "🍠",
+        question: "Dầu cá biển chứa nhiều loại acid béo nào rất có lợi cho sức khỏe tim mạch và trí não?",
+        options: [
+          "Acid béo no bão hòa",
+          "Acid béo omega-3",
+          "Palmitic acid tinh khiết",
+          "Hydrocarbon thơm"
+        ],
+        correct: 1,
+        explanation: "Dầu cá biển chứa nhiều acid béo omega-3 (như EPA, DHA) giúp phòng ngừa các bệnh tim mạch, cải thiện trí nhớ và sức khỏe."
+      },
+      {
+        id: 14,
+        cropName: "Súp lơ",
+        cropIcon: "🥦",
+        question: "Công thức tổng quát của chất béo (triglyceride) tạo bởi cùng một loại acid béo được biểu diễn là:",
+        options: [
+          "(RCOO)3C3H5",
+          "RCOOH",
+          "C3H5(OH)3",
+          "(RCOO)2C2H4"
+        ],
+        correct: 0,
+        explanation: "Công thức chung của chất béo tạo từ một loại acid béo RCOOH là (RCOO)3C3H5. Nếu từ các acid béo khác nhau là (R1COO)(R2COO)(R3COO)C3H5."
+      },
+      {
+        id: 15,
+        cropName: "Hành tây",
+        cropIcon: "🧅",
+        question: "Hầu hết các acid béo tự nhiên có đặc điểm gì nổi bật về chuỗi carbon?",
+        options: [
+          "Mạch carbon ngắn, phân nhánh nhiều, có số nguyên tử C lẻ.",
+          "Mạch carbon dài, không phân nhánh, có số nguyên tử C chẵn (thường từ 12 đến 24 C).",
+          "Mạch vòng thơm bão hòa, không chứa liên kết đôi.",
+          "Mạch cực ngắn từ 2 đến 6 carbon."
+        ],
+        correct: 1,
+        explanation: "SGK nêu rõ: Hầu hết acid béo tự nhiên là carboxylic acid đơn chức có mạch carbon dài (thường từ 12 đến 24 carbon), không phân nhánh và có số nguyên tử carbon chẵn."
+      }
+    ];
+
+    // Game State
+    let currentScore = 0;
+    let harvestedCrops = new Array(15).fill(false);
+    let currentQuestionIndex = null;
+    let attemptsCount = 0;
+    let totalAttempts = 0;
+    let soundEnabled = true;
+
+    // Web Audio API Sound Generator (No external audio files required!)
+    let audioCtx = null;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playTone(freq, type, duration, delay = 0) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        setTimeout(() => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, ctx.currentTime);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + duration);
+        }, delay * 1000);
+      } catch (e) {
+        console.log('Audio playback prevented');
+      }
+    }
+
+    function playSuccessSound() {
+      playTone(523.25, 'triangle', 0.15, 0);   // C5
+      playTone(659.25, 'triangle', 0.15, 0.1); // E5
+      playTone(783.99, 'triangle', 0.3, 0.2);  // G5
+    }
+
+    function playWrongSound() {
+      playTone(220, 'sawtooth', 0.2, 0);     // A3
+      playTone(196, 'sawtooth', 0.3, 0.15);  // G3
+    }
+
+    function playVictorySound() {
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, idx) => {
+        playTone(freq, 'sine', 0.25, idx * 0.12);
+      });
+    }
+
+    function toggleAudio() {
+      soundEnabled = !soundEnabled;
+      const soundIcon = document.getElementById('soundIcon');
+      soundIcon.textContent = soundEnabled ? "🔊" : "🔇";
+    }
+
+    function renderFarmGrid() {
+      const grid = document.getElementById('farmGrid');
+      grid.innerHTML = '';
+
+      questionsData.forEach((q, index) => {
+        const isHarvested = harvestedCrops[index];
+        const plot = document.createElement('div');
+        
+        plot.className = `relative flex flex-col items-center justify-between p-3 md:p-4 rounded-2xl cursor-pointer transition transform hover:-translate-y-1 ${
+          isHarvested ? 'soil-plot-harvested border-2 border-amber-900/40' : 'soil-plot border-2 border-amber-700'
+        }`;
+
+        plot.onclick = () => openQuestionModal(index);
+
+        plot.innerHTML = `
+          <!-- Number Tag -->
+          <div class="absolute top-1 left-2 text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+            isHarvested ? 'bg-emerald-900 text-emerald-200' : 'bg-amber-900 text-amber-200'
+          }">
+            #${index + 1}
+          </div>
+
+          <!-- Status Indicator -->
+          <div class="absolute top-1 right-2 text-xs">
+            ${isHarvested ? '🧺' : '🌱'}
+          </div>
+
+          <!-- Crop Graphic/Emoji -->
+          <div class="my-2 text-4xl md:text-5xl ${isHarvested ? 'opacity-40 filter grayscale' : 'crop-idle'}">
+            ${isHarvested ? '🕳️' : q.cropIcon}
+          </div>
+
+          <!-- Crop Name Tag -->
+          <div class="w-full text-center mt-1">
+            <span class="block text-xs md:text-sm font-bold truncate px-1 py-0.5 rounded-lg ${
+              isHarvested ? 'bg-emerald-950/60 text-emerald-300' : 'bg-amber-950/70 text-amber-100'
+            }">
+              ${isHarvested ? 'Đã thu hoạch' : q.cropName}
+            </span>
+          </div>
+        `;
+
+        grid.appendChild(plot);
+      });
+    }
+
+    function openQuestionModal(index) {
+      currentQuestionIndex = index;
+      attemptsCount = 0;
+      const q = questionsData[index];
+
+      document.getElementById('modalCropIcon').textContent = q.cropIcon;
+      document.getElementById('modalCropName').textContent = `${q.cropName} - Cây số ${q.id}`;
+      document.getElementById('modalTitle').textContent = `Câu hỏi ôn tập Lipid`;
+      document.getElementById('modalQuestionText').textContent = q.question;
+
+      // Render Options
+      const optionsContainer = document.getElementById('optionsContainer');
+      optionsContainer.innerHTML = '';
+
+      const prefixes = ['A', 'B', 'C', 'D'];
+      q.options.forEach((opt, optIdx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn w-full text-left p-3 md:p-3.5 rounded-xl border-2 border-slate-300 bg-white hover:bg-amber-50 text-slate-800 font-semibold text-sm md:text-base flex items-start gap-3';
+        btn.onclick = () => checkAnswer(optIdx);
+        btn.id = `optBtn_${optIdx}`;
+        btn.innerHTML = `
+          <span class="bg-amber-200 text-amber-900 w-7 h-7 rounded-lg font-bold flex items-center justify-center shrink-0 border border-amber-400">
+            ${prefixes[optIdx]}
+          </span>
+          <span class="pt-0.5">${opt}</span>
+        `;
+        optionsContainer.appendChild(btn);
+      });
+
+      // Reset Feedback Box
+      const feedbackBox = document.getElementById('feedbackBox');
+      feedbackBox.className = 'hidden p-4 rounded-2xl border-2 mb-4';
+      document.getElementById('retryBtn').classList.add('hidden');
+      document.getElementById('nextBtn').classList.add('hidden');
+
+      // Show Modal
+      const modal = document.getElementById('questionModal');
+      const container = document.getElementById('modalContainer');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        container.classList.remove('scale-95');
+      }, 10);
+    }
+
+    function checkAnswer(selectedIndex) {
+      totalAttempts++;
+      attemptsCount++;
+      const q = questionsData[currentQuestionIndex];
+      const isCorrect = selectedIndex === q.correct;
+
+      // Disable all option buttons
+      const buttons = document.querySelectorAll('#optionsContainer button');
+      buttons.forEach(btn => btn.disabled = true);
+
+      const feedbackBox = document.getElementById('feedbackBox');
+      const feedbackTitle = document.getElementById('feedbackTitle');
+      const feedbackExp = document.getElementById('feedbackExplanation');
+      const selectedBtn = document.getElementById(`optBtn_${selectedIndex}`);
+      const correctBtn = document.getElementById(`optBtn_${q.correct}`);
+
+      feedbackBox.classList.remove('hidden');
+
+      if (isCorrect) {
+        // Success Tone
+        playSuccessSound();
+
+        selectedBtn.classList.remove('bg-white', 'border-slate-300');
+        selectedBtn.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-900');
+
+        feedbackBox.className = 'p-4 rounded-2xl border-2 mb-4 bg-emerald-50 border-emerald-400 text-emerald-950';
+        feedbackTitle.innerHTML = `<span class="text-2xl">🎉</span> Chính xác! Rất giỏi!`;
+        feedbackExp.innerHTML = `<b>Giải thích SGK:</b> ${q.explanation}`;
+
+        // Mark harvested if not already
+        if (!harvestedCrops[currentQuestionIndex]) {
+          harvestedCrops[currentQuestionIndex] = true;
+          currentScore += 100;
+          showFloatingScore(100);
+        }
+
+        updateDashboard();
+        renderFarmGrid();
+
+        document.getElementById('nextBtn').classList.remove('hidden');
+
+        // Check for overall victory
+        if (harvestedCrops.every(c => c === true)) {
+          setTimeout(triggerVictory, 1000);
+        }
+
+      } else {
+        // Wrong Tone
+        playWrongSound();
+
+        selectedBtn.classList.remove('bg-white', 'border-slate-300');
+        selectedBtn.classList.add('bg-rose-100', 'border-rose-400', 'text-rose-900');
+
+        // Highlight correct button
+        correctBtn.classList.remove('bg-white', 'border-slate-300');
+        correctBtn.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-900');
+
+        feedbackBox.className = 'p-4 rounded-2xl border-2 mb-4 bg-amber-50 border-amber-400 text-amber-950';
+        feedbackTitle.innerHTML = `<span class="text-2xl">💡</span> Chưa chính xác! Cùng ôn lại kiến thức nhé:`;
+        feedbackExp.innerHTML = `<b>Lời giải SGK Hóa 12:</b> ${q.explanation}`;
+
+        document.getElementById('retryBtn').classList.remove('hidden');
+        document.getElementById('nextBtn').classList.remove('hidden');
+      }
+    }
+
+    function retryQuestion() {
+      openQuestionModal(currentQuestionIndex);
+    }
+
+    function closeQuestionModal() {
+      const modal = document.getElementById('questionModal');
+      const container = document.getElementById('modalContainer');
+      modal.classList.add('opacity-0');
+      container.classList.add('scale-95');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
+    function updateDashboard() {
+      const count = harvestedCrops.filter(Boolean).length;
+      document.getElementById('scoreDisplay').textContent = currentScore;
+      document.getElementById('harvestedCount').textContent = count;
+      
+      const percent = Math.round((count / 15) * 100);
+      document.getElementById('progressPercent').textContent = `${percent}%`;
+      document.getElementById('progressBar').style.width = `${percent}%`;
+    }
+
+    function showFloatingScore(pts) {
+      const el = document.createElement('div');
+      el.className = 'floating-score text-2xl md:text-3xl';
+      el.textContent = `+${pts} 🧺`;
+      el.style.left = `50%`;
+      el.style.top = `40%`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1200);
+    }
+
+    function triggerVictory() {
+      playVictorySound();
+      startConfetti();
+
+      document.getElementById('finalScore').textContent = currentScore;
+      const accuracy = Math.round((15 / Math.max(15, totalAttempts)) * 100);
+      document.getElementById('accuracyText').textContent = `${accuracy}%`;
+
+      document.getElementById('victoryModal').classList.remove('hidden');
+    }
+
+    function resetGame() {
+      currentScore = 0;
+      harvestedCrops = new Array(15).fill(false);
+      totalAttempts = 0;
+      updateDashboard();
+      renderFarmGrid();
+      document.getElementById('victoryModal').classList.add('hidden');
+      stopConfetti();
+    }
+
+    function confirmRestart() {
+      if (harvestedCrops.some(Boolean)) {
+        resetGame();
+      } else {
+        resetGame();
+      }
+    }
+
+    function openInfoModal() {
+      document.getElementById('infoModal').classList.remove('hidden');
+    }
+
+    function closeInfoModal() {
+      document.getElementById('infoModal').classList.add('hidden');
+    }
+
+    let confettiAnimationId = null;
+    function startConfetti() {
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const particles = Array.from({ length: 120 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height - canvas.height,
+        color: ['#f43f5e', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'][Math.floor(Math.random() * 5)],
+        size: Math.random() * 8 + 4,
+        speedY: Math.random() * 3 + 2,
+        speedX: Math.random() * 2 - 1,
+        angle: Math.random() * 360
+      }));
+
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          p.y += p.speedY;
+          p.x += p.speedX;
+          p.angle += 3;
+          if (p.y > canvas.height) p.y = -10;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.angle * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          ctx.restore();
+        });
+        confettiAnimationId = requestAnimationFrame(render);
+      }
+      render();
+    }
+
+    function stopConfetti() {
+      if (confettiAnimationId) {
+        cancelAnimationFrame(confettiAnimationId);
+      }
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Init on Page Load
+    window.onload = function() {
+      renderFarmGrid();
+      updateDashboard();
+    };
+  </script>
+</body>
+</html>
